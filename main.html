@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Sunum: Prompt Tasarımı ve KASKO Modeli</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --main-bg: #181a1b;
+      --main-text: #fff;
+      --accent: #35a9ff;
+      --accent-dark: #1a7fc9;
+      --subtle: #24262b;
+      --border: #3f4a58;
+      --panel-bg: #1e2227;
+      --panel-border: #4b84ce;
+      --table-header-bg: #35a9ff;
+      --table-header-text: #181a1b;
+      --table-row-alt: #20242b;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      --highlight: #ffe066;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: var(--main-bg);
+      color: var(--main-text);
+      overflow-x: hidden;
+      line-height: 1.6;
+      scroll-behavior: smooth;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Header Styles */
+    header {
+      background: var(--panel-bg);
+      border-bottom: 2px solid var(--panel-border);
+      padding: 15px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo-icon {
+      font-size: 2rem;
+      color: var(--accent);
+    }
+    
+    .logo-text {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, var(--accent), #4dd0e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 25px;
+    }
+    
+    nav a {
+      color: var(--main-text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 8px 15px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    nav a:hover, nav a.active {
+      color: var(--accent);
+    }
+    
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    
+    nav a:hover::after, nav a.active::after {
+      width: 100%;
+    }
+    
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(rgba(24, 26, 27, 0.9), rgba(30, 34, 39, 0.8)), url('https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=2070');
+      background-size: cover;
+      background-position: center;
+      padding: 80px 20px;
+      text-align: center;
+      margin-bottom: 50px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: var(--shadow);
+    }
+    
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, var(--accent), #4dd0e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    
+    .hero p {
+      font-size: 1.8rem;
+      max-width: 900px;
+      margin: 0 auto 30px;
+      color: #e0e0e0;
+    }
+    
+    .highlight {
+      color: var(--accent);
+      font-weight: bold;
+    }
+    
+    /* Main Content Styles */
+    .card {
+      background: var(--panel-bg);
+      border: 2px solid var(--panel-border);
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 40px;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+    }
+    
+    .card h2 {
+      color: var(--accent);
+      font-size: 2.2rem;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .card h3 {
+      color: var(--accent);
+      font-size: 1.8rem;
+      margin: 20px 0 15px;
+    }
+    
+    .card p {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #d0d0d0;
+    }
+    
+    /* KASKO Section */
+    .kasko-section {
+      background: linear-gradient(rgba(30, 34, 39, 0.9), rgba(24, 26, 27, 0.9));
+      border: 2px solid var(--accent);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 50px 0;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kasko-section:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #35a9ff, #4dd0e1, #35a9ff);
+    }
+    
+    .kasko-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .kasko-header h2 {
+      font-size: 2.8rem;
+      color: var(--accent);
+      margin-bottom: 15px;
+    }
+    
+    .kasko-header p {
+      font-size: 1.4rem;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #c0c0c0;
+    }
+    
+    .kasko-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .kasko-part {
+      flex: 1 1 300px;
+      background: rgba(30, 34, 39, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+    
+    .kasko-part:hover {
+      background: rgba(40, 44, 49, 0.8);
+      transform: translateY(-5px);
+    }
+    
+    .kasko-part h4 {
+      color: var(--accent);
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .kasko-part .icon {
+      font-size: 1.8rem;
+      color: #4dd0e1;
+    }
+    
+    .kasko-visual {
+      text-align: center;
+      margin: 40px 0;
+    }
+    
+    .kasko-visual img {
+      max-width: 100%;
+      max-height: 80vh;
+      border: 3px solid var(--panel-border);
+      border-radius: 15px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8);
+      background: var(--panel-bg);
+      padding: 15px;
+    }
+    
+    .kasko-visual p {
+      font-size: 1.2rem;
+      color: #aaa;
+      margin-top: 15px;
+      font-style: italic;
+    }
+    
+    /* Module List */
+    .module-list {
+      background: var(--panel-bg);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 40px 0;
+      box-shadow: var(--shadow);
+    }
+    
+    .module-list h2 {
+      text-align: center;
+      color: var(--accent);
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+    }
+    
+    .module-list ul {
+      list-style: none;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .module-list li {
+      font-size: 1.4rem;
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--accent);
+      background: rgba(40, 44, 49, 0.5);
+      transition: all 0.3s ease;
+    }
+    
+    .module-list li:hover {
+      background: rgba(50, 54, 59, 0.7);
+      transform: translateX(10px);
+    }
+    
+    .highlight-module {
+      color: var(--highlight);
+      font-weight: bold;
+    }
+    
+    .module-divider {
+      text-align: center;
+      margin: 25px 0;
+      padding: 15px 0;
+      border-top: 2px solid #444;
+      border-bottom: 2px solid #444;
+      color: #888;
+      font-style: italic;
+      font-size: 1.2rem;
+      background: rgba(50, 54, 59, 0.5);
+      border-radius: 8px;
+    }
+    
+    /* Entellektüalizmin Yükselişi Section */
+    .intellectual-rise {
+      margin: 60px 0;
+    }
+    
+    .intellectual-rise h2 {
+      text-align: center;
+      color: var(--accent);
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+    }
+    
+    .image-comparison {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .image-card {
+      flex: 1;
+      min-width: 300px;
+      max-width: 45%;
+      text-align: center;
+      background: var(--panel-bg);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease;
+    }
+    
+    .image-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    .image-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-bottom: 3px solid var(--accent);
+    }
+    
+    .image-card p {
+      padding: 20px;
+      font-size: 1.2rem;
+      background: rgba(40, 44, 49, 0.7);
+    }
+    
+    /* Resources Section */
+    .resources-section {
+      margin: 60px 0;
+    }
+    
+    .resources-section h2 {
+      text-align: center;
+      color: var(--accent);
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+    }
+    
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+    }
+    
+    .resource-card {
+      background: var(--panel-bg);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease;
+      border: 1px solid var(--panel-border);
+    }
+    
+    .resource-card:hover {
+      transform: translateY(-10px);
+      border-color: var(--accent);
+    }
+    
+    .resource-thumbnail {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+    
+    .resource-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .resource-card:hover .resource-thumbnail img {
+      transform: scale(1.05);
+    }
+    
+    .resource-type {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    
+    .resource-content {
+      padding: 25px;
+    }
+    
+    .resource-content h3 {
+      color: var(--accent);
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+      min-height: 60px;
+    }
+    
+    .resource-content p {
+      color: #d0d0d0;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    
+    .resource-link {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--main-bg);
+      padding: 10px 25px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    .resource-link:hover {
+      background: var(--accent-dark);
+      transform: translateY(-3px);
+    }
+    
+    /* Footer */
+    footer {
+      background: var(--panel-bg);
+      border-top: 2px solid var(--panel-border);
+      padding: 30px 0;
+      margin-top: 50px;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .footer-content p {
+      font-size: 1.2rem;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .social-links a {
+      color: var(--accent);
+      font-size: 1.8rem;
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      color: #4dd0e1;
+      transform: translateY(-5px);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .hero h1 {
+        font-size: 2.8rem;
+      }
+      
+      .hero p {
+        font-size: 1.5rem;
+      }
+      
+      .card h2 {
+        font-size: 2rem;
+      }
+      
+      .kasko-header h2 {
+        font-size: 2.4rem;
+      }
+      
+      .kasko-part {
+        flex: 1 1 100%;
+      }
+      
+      nav ul {
+        gap: 10px;
+      }
+      
+      nav a {
+        padding: 6px 10px;
+        font-size: 1rem;
+      }
+      
+      .image-card {
+        max-width: 100%;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .hero h1 {
+        font-size: 2.2rem;
+      }
+      
+      .hero p {
+        font-size: 1.3rem;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+      
+      .card h2 {
+        font-size: 1.8rem;
+      }
+      
+      .kasko-header h2 {
+        font-size: 2rem;
+      }
+      
+      .kasko-header p {
+        font-size: 1.2rem;
+      }
+      
+      .kasko-part h4 {
+        font-size: 1.4rem;
+      }
+      
+      .module-list li {
+        font-size: 1.2rem;
+      }
+      
+      .resources-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .hero {
+        padding: 50px 20px;
+      }
+      
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+      
+      nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .image-comparison {
+        flex-direction: column;
+      }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.2s; }
+    .delay-2 { animation-delay: 0.4s; }
+    .delay-3 { animation-delay: 0.6s; }
+    .delay-4 { animation-delay: 0.8s; }
+    .delay-5 { animation-delay: 1.0s; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--panel-bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-dark);
+    }
+    
+    /* Navigation indicator */
+    .section-indicator {
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 90;
+    }
+    
+    .indicator-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .indicator-dot.active {
+      background: var(--accent);
+      transform: scale(1.3);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-brain logo-icon"></i>
+        <div class="logo-text">per lingua ad astra</div>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="#sunum" class="active">Sunum</a></li>
+          <li><a href="#moduller">Modüller</a></li>
+          <li><a href="#son-gelismeler">Son Gelişmeler</a></li>
+          <li><a href="#kasko">KASKO Modeli</a></li>
+          <li><a href="#kaynaklar">Kaynaklar</a></li>
+          <li><a href="#iletisim">İletişim</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  
+  <!-- Navigation Indicator -->
+  <div class="section-indicator">
+    <a href="#sunum" class="indicator-dot active"></a>
+    <a href="#kasko" class="indicator-dot"></a>
+    <a href="#moduller" class="indicator-dot"></a>
+    <a href="#son-gelismeler" class="indicator-dot"></a>
+    <a href="#kaynaklar" class="indicator-dot"></a>
+    <a href="#iletisim" class="indicator-dot"></a>
+  </div>
+  
+  <!-- Hero Section -->
+  <section class="hero" id="sunum">
+    <div class="container">
+      <h1 class="fade-in">Prompt Tasarımı ve <span class="highlight">KASKO Modeli</span></h1>
+      <p class="fade-in delay-1">Yapay Zekâ ile Etkili Çalışma için Dilbilimsel Yöntemler</p>
+    </div>
+  </section>
+
+  <!-- Introduction Card -->
+    <div class="card fade-in delay-3">
+      <h2><i class="fas fa-compass"></i> Sunum Hedefleri</h2>
+      <div class="content">
+        <p>Bu sunumda, yapay zekâ modelleriyle etkili iletişim kurmak için geliştirilen KASKO modelini ve farklı yapay zekâ modellerini proje odaklı ve eş zamanlı kullanımı inceleyeceğiz.</p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px;">
+          <div style="flex: 1; min-width: 250px; background: rgba(40, 44, 49, 0.5); padding: 20px; border-radius: 10px; border-left: 4px solid var(--accent);">
+            <h3><i class="fas fa-bullseye"></i> Amaç</h3>
+            <p>YZ ile etkili çalışma için eğitim tasarımı</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 250px; background: rgba(40, 44, 49, 0.5); padding: 20px; border-radius: 10px; border-left: 4px solid var(--accent);">
+            <h3><i class="fas fa-users"></i> Hedef Kitle</h3>
+            <p>Kurumsal firmalar, KOBİ'ler, akademi, bireysel kullanıcılar</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 250px; background: rgba(40, 44, 49, 0.5); padding: 20px; border-radius: 10px; border-left: 4px solid var(--accent);">
+            <h3><i class="fas fa-graduation-cap"></i> Beklenti</h3>
+            <p>Katılımcıları uzman kullanıcı seviyesine ulaştırma</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+     <!-- Entellektüalizmin Yükselişi Section -->
+    <div class="intellectual-rise fade-in delay-4" id="son-gelismeler">
+      <h2>Entellektüalizmin Yükselişi</h2>
+      <div class="image-comparison">
+        <div class="image-card">
+          <img src="img/sean_grove.png" alt="Prompt is Dead">
+          <p>"Prompt is Dead" - Sean Grove</p>
+        </div>
+        <div class="image-card">
+          <img src="img/llm_vs_lcm.gif" alt="LLM vs LCM">
+          <p>Semiyotikten Semantiğe Geçiş</p>
+        </div>
+      </div>
+    </div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Modules Section -->
+    <div class="module-list fade-in delay-2" id="moduller">
+      <h2><i class="fas fa-layer-group"></i> Eğitim Modülleri</h2>
+      <ul>
+        <li>Promptun Bilişsel Temelleri</li>
+        <li class="highlight-module">Prompt Tasarımı: KASKO Modeli - I</li>
+        <li>Prompt Mühendisliğine Giriş: Temel Teknikler</li>
+        
+        <li class="module-divider">----------</li>
+        
+        <li>YZ ile Çalışmanın Psikodinamik Faktörleri</li>
+        <li>Prompt Tasarımı: KASKO Modeli - II</li>
+        <li>İleri Düzey Prompt Mühendisliği Teknikleri</li>
+        <li class="highlight-module">YZ Orkestrasyonu - I: Farklı Modelleri Proje Odaklı ve Eş Zamanlı Kullanımı</li>
+        
+        <li class="module-divider">----------</li>
+        
+        <li>Dilbilimsel Yaklaşım</li>
+        <li>Pax Cognitiva - I: Zihnin Semantik Yankısı</li>
+        <li>Pax Cognitiva - II: Kurumsal Semantik Hafızaya Doğru</li>
+        <li>YZ Orkestrasyonu - II: "Söylemle" Kod Yazımı ve API kullanımı</li>
+        
+        <li class="module-divider">----------</li>
+        
+        <li>C-Level Vision</li>
+      </ul>
+    </div>
+            
+      
+    <!-- KASKO Section -->
+    <div class="kasko-section fade-in delay-5" id="kasko">
+      <div class="kasko-header">
+        <h2><i class="fas fa-file-contract"></i> KASKO Sözleşmesi</h2>
+        <p>Her prompt bir sözleşmedir. Sözleşmede ne isteyeceğinizi tam olarak bilemeyebilirsiniz; fakat ne istemediğinizi iyi bilmelisiniz.</p>
+      </div>
+      
+      <div class="kasko-content">
+        <div class="kasko-part">
+          <h4><i class="fas fa-user icon"></i> Karakter</h4>
+          <p>LLM'e verdiğiniz kimlik. Kim olarak konuşmalı?</p>
+          <p><strong>Örnek Roller:</strong></p>
+          <p>Akademisyen, SEO Uzmanı, Finansal Danışman, Hikâye Anlatıcısı, İş Zekâsı Analisti</p>
+        </div>
+        
+        <div class="kasko-part">
+          <h4><i class="fas fa-bullseye icon"></i> Amaç</h4>
+          <p>Modelin sahnedeki niyeti. Bu prompt ne istiyor?</p>
+          <p><strong>Görev Tipleri:</strong></p>
+          <p>Özetlemek, Anlatmak, Dönüştürmek, Kurgulamak, Sorular Üretmek, Hesaplamak</p>
+        </div>
+        
+        <div class="kasko-part">
+          <h4><i class="fas fa-ban icon"></i> Sınırlar</h4>
+          <p>Modelin yapmaması gerekenler. 'Ne istemiyor?'</p>
+          <p><strong>Örnekler:</strong></p>
+          <p>Tekrar Yapma, Uzatma, Listeleme, Varsayımda bulunma, Mantığı eklemelerle/eksiltmelerle bozma</p>
+        </div>
+        
+        <div class="kasko-part">
+          <h4><i class="fas fa-road icon"></i> Kaçış Rampası</h4>
+          <p>Model görevde kararsız kalır veya başarısız olursa. Olmazsa ne yapmalı?</p>
+          <p><strong>Plan Önerileri:</strong></p>
+          <p>Cevap veremiyorsan soru sor, Emin değilsen uyar, Nötr kal, Genel bir özet sun</p>
+        </div>
+        
+        <div class="kasko-part">
+          <h4><i class="fas fa-cogs icon"></i> Optimize</h4>
+          <p>Modelin cevabını nasıl daha iyi hale getirebilirsin?</p>
+          <p><strong>Öneriler:</strong></p>
+          <p>Bunu daha kısa yap, Bana iki farklı versiyon ver, Alternatif üslup dene, Daha teknik dil kullan, %80 Teknik %20 Dostça dil kullan</p>
+        </div>
+      </div>
+      
+      <div class="kasko-visual">
+        <h3><i class="fas fa-diagram-project"></i> KASKO Modeli Görseli</h3>
+        <img src="img/kasko.png" alt="KASKO Modeli">
+        <p>Prompt tasarımı için KASKO modelinin görsel temsili</p>
+      </div>
+    </div>
+    
+    <!-- Kaynaklar Section -->
+    <div class="resources-section fade-in" id="kaynaklar">
+      <h2><i class="fas fa-book-open"></i> Yararlı Kaynaklar</h2>
+      <div class="resources-grid">
+        <!-- YouTube Kaynağı -->
+        <div class="resource-card">
+          <div class="resource-thumbnail">
+            <img src="img/sean_grove.png" alt="Prompt Engineering Tutorial">
+            <div class="resource-type">YouTube</div>
+          </div>
+          <div class="resource-content">
+            <h3>Prompt Mühendisliği: Temel Teknikler</h3>
+            <p>Bu kapsamlı eğitimde, temel prompt mühendisliği tekniklerini ve profesyonel kullanım yöntemlerini öğreneceksiniz.</p>
+            <a href="https://www.youtube.com/watch?v=8rABwKRsec4&t=675s" class="resource-link" target="_blank">Videoyu İzle</a>
+          </div>
+        </div>
+        
+        <!-- arXiv Makalesi -->
+        <div class="resource-card">
+          <div class="resource-thumbnail">
+            <img src="img/arxiv.png" alt="AI Research Paper">
+            <div class="resource-type">arXiv Makale</div>
+          </div>
+          <div class="resource-content">
+            <h3>Büyük Dil Modellerinde Prompt Optimizasyonu</h3>
+            <p>Bu araştırma makalesi, büyük dil modellerinde prompt tasarımının performans üzerindeki etkilerini inceliyor.</p>
+            <a href="https://arxiv.org/abs/2109.01652" class="resource-link" target="_blank">Makaleyi Oku</a>
+          </div>
+        </div>
+        
+        <!-- Blog Yazısı -->
+        <div class="resource-card">
+          <div class="resource-thumbnail">
+            <img src="img/llm_vs_lcm.gif" alt="AI Blog Post">
+            <div class="resource-type">Blog Yazısı</div>
+          </div>
+          <div class="resource-content">
+            <h3>Prompt Tasarımında İleri Teknikler</h3>
+            <p>Meta'nın AI blogunda, prompt tasarımında kullanılan ileri teknikleri ve en iyi uygulamaları keşfedin.</p>
+            <a href="https://ai.meta.com/blog" class="resource-link" target="_blank">Yazıyı Oku</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Gemini Section -->
+    <div class="card fade-in">
+      <h2><i class="fas fa-robot"></i> Gemini AI Studio Entegrasyonu</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px;">
+        <div style="flex: 1; min-width: 300px;">
+          <h3><i class="fas fa-wrench"></i> Optimizasyon</h3>
+          <p>Gemini AI Studio ile prompt optimizasyonu ve test süreçleri</p>
+          <p>Promptların performansını ölçme ve iyileştirme fırsatı</p>
+        </div>
+        <div style="flex: 1; min-width: 300px; text-align: center;">
+          <img src="img/gemini-ai-studio.png" alt="Gemini AI Studio" style="max-width: 100%; border-radius: 10px; border: 2px solid var(--panel-border);">
+          <p style="margin-top: 10px; font-style: italic;">Gemini AI Studio arayüzü</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <footer id="iletisim">
+    <div class="footer-content">
+      <p>&copy; 2025 Uğur ARI - Tüm hakları saklıdır</p>
+      <p>Yapay Zekâ ve Prompt Tasarımı Eğitim Platformu</p>
+      <div class="social-links">
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-linkedin"></i></a>
+        <a href="#"><i class="fab fa-github"></i></a>
+        <a href="#"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+  </footer>
+  
+  <script>
+    // Animasyonları tetikleme
+    document.addEventListener('DOMContentLoaded', function() {
+      const animatedElements = document.querySelectorAll('.fade-in');
+      
+      animatedElements.forEach(el => {
+        el.style.opacity = '0';
+      });
+      
+      setTimeout(() => {
+        animatedElements.forEach(el => {
+          el.style.animation = 'fadeIn 0.8s ease-out forwards';
+        });
+      }, 300);
+      
+      // Aktif menü öğesi takibi
+      const sections = document.querySelectorAll('section, .kasko-section, .module-list, .intellectual-rise, .resources-section, footer');
+      const navLinks = document.querySelectorAll('nav a');
+      const indicatorDots = document.querySelectorAll('.indicator-dot');
+      
+      function updateActiveSection() {
+        let current = '';
+        
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          if (pageYOffset >= (sectionTop - 200)) {
+            current = section.getAttribute('id');
+          }
+        });
+        
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href').substring(1) === current) {
+            link.classList.add('active');
+          }
+        });
+        
+        indicatorDots.forEach(dot => {
+          dot.classList.remove('active');
+          if (dot.getAttribute('href').substring(1) === current) {
+            dot.classList.add('active');
+          }
+        });
+      }
+      
+      window.addEventListener('scroll', updateActiveSection);
+      updateActiveSection();
+      
+      // Yumuşak kaydırma
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 100,
+              behavior: 'smooth'
+            });
+            
+            // Aktif menü öğesini güncelle
+            navLinks.forEach(link => link.classList.remove('active'));
+            this.classList.add('active');
+          }
+        });
+      });
+      
+      // Header scroll efekti
+      window.addEventListener('scroll', function() {
+        const header = document.querySelector('header');
+        if (window.scrollY > 50) {
+          header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.9)';
+          header.style.background = 'rgba(30, 34, 39, 0.95)';
+        } else {
+          header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.7)';
+          header.style.background = 'var(--panel-bg)';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
